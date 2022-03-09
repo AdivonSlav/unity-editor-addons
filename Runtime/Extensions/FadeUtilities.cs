@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine.Rendering;
 
 
-namespace FIT.EditorAddons
+namespace FIT.EditorAddons.Extensions
 {
     public static class FadeUtilities
     {
