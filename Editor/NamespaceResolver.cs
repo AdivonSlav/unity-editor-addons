@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 public class NamespaceResolver : UnityEditor.AssetModificationProcessor
 {
     [DllImport("ScriptParser")]
-    public static extern bool ParseScript(string filePath, string genNamespace);
+    private static extern bool ParseScript(string filePath, string genNamespace);
 
     [MenuItem("FIT Editor Addons/Generate namespaces for existing scripts")]
     static void EditScripts()
