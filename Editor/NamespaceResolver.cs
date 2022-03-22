@@ -4,14 +4,47 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
+using System.Runtime.InteropServices;
 
 //If there would be more than one keyword to replace, add a Dictionary
-public class NamespaceResolver : UnityEditor.AssetModificationProcessor 
+public class NamespaceResolver : UnityEditor.AssetModificationProcessor
 {
+    [DllImport("ScriptParser")]
+    public static extern bool ParseScript(string filePath, string genNamespace);
+
+    [MenuItem("FIT Editor Addons/Generate namespaces for existing scripts")]
+    static void EditScripts()
+    {
+        string[] scripts = Directory.GetFiles(Application.dataPath, "*.cs",SearchOption.AllDirectories);
+        
+        for (int i = 0; i < scripts.Length; i++)
+        {
+            scripts[i] = scripts[i].Replace("/", "\\");
+            
+            var generatedNamespace = "";
+
+            if (scripts[i].StartsWith(Application.dataPath.Replace("/","\\")))
+            {
+                var relPath = scripts[i].Substring(Application.dataPath.Length);
+                generatedNamespace = GenerateNamespace(relPath);
+            }
+
+            // ParseScript() will return true if the file already has a namespace declarator or it has edited in a new one.
+            // Returns false if errors were encountered during filestream operations
+            if (ParseScript(scripts[i], generatedNamespace))
+                Debug.Log($"Edited in a namespace for: {scripts[i]}");
+            else
+                Debug.LogError($"Could not edit in a namespace for: {scripts[i]}");
+        }
+        
+        AssetDatabase.Refresh();
+    }
+    
     private static string GenerateNamespace(string metaFilePath)
     {
         var SegmentedPath = $"{Path.GetDirectoryName(metaFilePath)}".Split(new[] { '\\' }, StringSplitOptions.None);
-
+        
+        
         var GeneratedNamespace = "";
         var FinalNamespace = "";
 
