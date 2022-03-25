@@ -2,77 +2,87 @@
 using System.IO;
 using UnityEngine;
 
-namespace FITEditorAddons.ScriptParser
+namespace FITEditorAddons.Editor
 {
     public class ScriptParser
     {
-        public static void ParseScript(string filePath, string genNamespace)
+        public static void InsertNamespace(string FilePath, string GenNamespace)
         {
-            List<string> scriptLines = ReadFromScript(filePath);
-    
-            if (scriptLines == null)
-            {
-                Debug.Log($"Script already contains namespace: {filePath}");
+            List<string> ScriptLines = new List<string>();
+            
+            if (!CheckNamespace(ref ScriptLines, FilePath))
                 return;
-            }
-
+            
             //  Incase the script file is not empty we need to find the correct insertion spot
             //  If it is empty, then we can just add the namespace declaration to the list
-            if (scriptLines.Count != 0)
+            if (ScriptLines.Count != 0)
             {
-                int insertIndex = scriptLines.FindIndex(str => str.Contains("class") && !str.Contains("//"));
-                scriptLines.Insert(insertIndex, $"namespace {genNamespace}");
-                scriptLines.Insert(insertIndex + 1, "{");
+                int InsertIndex = ScriptLines.FindIndex(str => str.Contains("class") && !str.Contains("//"));
+                ScriptLines.Insert(InsertIndex, $"namespace {GenNamespace}");
+                ScriptLines.Insert(InsertIndex + 1, "{");
     
-                // insertIndex + 2 in order to not indent namespace and its opening bracket
-                for (int i = insertIndex + 2; i < scriptLines.Count; i++)
-                    scriptLines[i] = "    " + scriptLines[i];
+                // InsertIndex + 2 in order to not indent namespace and its opening bracket
+                for (int i = InsertIndex + 2; i < ScriptLines.Count; i++)
+                    ScriptLines[i] = "    " + ScriptLines[i];
             
-                scriptLines.Add("}");
+                ScriptLines.Add("}");
             }
             else
             {
-                scriptLines.Add($"namespace {genNamespace}");
-                scriptLines.Add("{");
-                scriptLines.Add("");
-                scriptLines.Add("}");
+                ScriptLines.Add($"namespace {GenNamespace}");
+                ScriptLines.Add("{");
+                ScriptLines.Add("");
+                ScriptLines.Add("}");
             }
             
 
-            WriteToScript(scriptLines.ToArray(), filePath);
+            WriteToScript(ScriptLines.ToArray(), FilePath);
             
-            Debug.Log($"Edited in a namespace for script: {filePath}");
+            Debug.Log($"Edited in a namespace for script: {FilePath}");
         }
     
-        private static void WriteToScript(string[] scriptLines, string filePath)
+        private static void WriteToScript(string[] ScriptLines, string FilePath)
         {
-            using (var sw = new StreamWriter(filePath, false))
+            using (var sw = new StreamWriter(FilePath, false))
             {
-                foreach (var line in scriptLines)
+                foreach (var Line in ScriptLines)
                 {
-                    sw.WriteLine(line);
+                    sw.WriteLine(Line);
                 }
             }
         }
     
-        private static List<string> ReadFromScript(string filePath)
+        private static List<string> ReadFromScript(string FilePath)
         {
-            List<string> lines = new List<string>();
+            List<string> Lines = new List<string>();
             
-            using (var sr = new StreamReader(filePath))
+            using (var sr = new StreamReader(FilePath))
             {
-                string line = "";
+                var Line = "";
                 
-                while ((line = sr.ReadLine()) != null)
+                while ((Line = sr.ReadLine()) != null)
                 {
-                    if (line.StartsWith("namespace") )
+                    if (Line.StartsWith("namespace") )
                         return null;
-                    
-                    lines.Add(line);
+
+                    Lines.Add(Line);
                 }
             }
 
-            return lines;
+            return Lines;
+        }
+
+        private static bool CheckNamespace(ref List<string> ScriptLines, string FilePath)
+        {
+            ScriptLines = ReadFromScript(FilePath);
+
+            if (ScriptLines == null)
+            {
+                Debug.Log($"Script already contains namespace: {FilePath}");
+                return false;
+            }
+
+            return true;
         }
     }
 }

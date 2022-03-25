@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
-using FITEditorAddons.ScriptParser;
+using FITEditorAddons.Editor;
 
 //If there would be more than one keyword to replace, add a Dictionary
 public class NamespaceResolver : UnityEditor.AssetModificationProcessor
@@ -12,22 +12,30 @@ public class NamespaceResolver : UnityEditor.AssetModificationProcessor
     [MenuItem("FIT Editor Addons/Generate namespaces for existing scripts (experimental)")]
     static void EditScripts()
     {
-        string[] scripts = Directory.GetFiles(Application.dataPath, "*.cs",SearchOption.AllDirectories);
-        
-        for (int i = 0; i < scripts.Length; i++)
+        var ScriptsPath = $"{Application.dataPath}/Scripts";
+
+        if (!Directory.Exists(ScriptsPath))
         {
-            scripts[i] = scripts[i].Replace("/", "\\");
+            Debug.LogError("Could not find Scripts folder!");
+            return;
+        }
+        
+        var Scripts = Directory.GetFiles(ScriptsPath, "*.cs", SearchOption.AllDirectories);
+
+        for (var i = 0; i < Scripts.Length; i++)
+        {
+            Scripts[i] = Scripts[i].Replace("/", "\\");
             
-            var generatedNamespace = "";
+            var GeneratedNamespace = "";
 
             // Just getting the relative path from the Assets folder
-            if (scripts[i].StartsWith(Application.dataPath.Replace("/","\\")))
+            if (Scripts[i].StartsWith(Application.dataPath.Replace("/","\\")))
             {
-                var relPath = scripts[i].Substring(Application.dataPath.Length);
-                generatedNamespace = GenerateNamespace(relPath);
+                var RelPath = Scripts[i].Substring(Application.dataPath.Length);
+                GeneratedNamespace = GenerateNamespace(RelPath);
             }
 
-            ScriptParser.ParseScript(scripts[i], generatedNamespace);
+            ScriptParser.InsertNamespace(Scripts[i], GeneratedNamespace);
         }
         
         AssetDatabase.Refresh();
@@ -36,8 +44,6 @@ public class NamespaceResolver : UnityEditor.AssetModificationProcessor
     private static string GenerateNamespace(string metaFilePath)
     {
         var SegmentedPath = $"{Path.GetDirectoryName(metaFilePath)}".Split(new[] { '\\' }, StringSplitOptions.None);
-        
-        
         var GeneratedNamespace = "";
         var FinalNamespace = "";
 
